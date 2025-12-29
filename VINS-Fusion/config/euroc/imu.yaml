@@ -1,0 +1,87 @@
+%YAML:1.0
+# 核心参数：禁用外部相机文件，仅用内嵌参数
+imu: 1
+num_of_cam: 2
+image_width: 640
+image_height: 400
+
+# 话题配置（确保和设备发布的完全一致）
+imu_topic: "/imsee/imu"
+image0_topic: "/imsee/image/rectified/left"
+image1_topic: "/imsee/image/rectified/right"
+image0_encoding: "rgb8"
+image1_encoding: "rgb8"
+
+# 输出目录（自动创建，无需手动）
+output_path: "~/output/"
+pose_graph_save_path: "~/output/pose_graph/"
+
+# 左目内嵌参数（无外部引用）
+cam0:
+  model_type: PINHOLE
+  camera_name: camera0
+  distortion_model: RADTAN
+  distortion_coeffs: [0.0, 0.0, 0.0, 0.0]
+  fx: 256.613
+  fy: 256.613
+  cx: 290.699
+  cy: 199.805
+
+# 右目内嵌参数（无外部引用）
+cam1:
+  model_type: PINHOLE
+  camera_name: camera1
+  distortion_model: RADTAN
+  distortion_coeffs: [0.0, 0.0, 0.0, 0.0]
+  fx: 256.613
+  fy: 256.613
+  cx: 290.699
+  cy: 199.805
+
+# IMU-相机外参（官方参数）
+estimate_extrinsic: 0
+body_T_cam0: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [-0.998068, 0.0614698, -0.00900176, 0.06,
+         -0.0614171, -0.998094, -0.00602787, 0.0,
+         -0.00935513, -0.00546337, 0.999941, -0.00164,
+         0.0, 0.0, 0.0, 1.0]
+
+body_T_cam1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [-0.997821, 0.062463, -0.0212332, -0.0637139,
+         -0.0622827, -0.998018, -0.00904748, -0.00775863,
+         -0.0217563, -0.0077053, 0.999734, 0.00733252,
+         0.0, 0.0, 0.0, 1.0]
+
+# 多线程+特征跟踪参数（无拼写错误）
+multiple_thread: 1
+feature tracker parameters:
+  max_cnt: 250
+  min_dist: 20
+  freq: 10
+  F_threshold: 1.0
+  show_track: 1
+  flow_back: 1
+
+# 优化参数
+max_solver_time: 0.04
+max_num_iterations: 8
+keyframe_parallax: 10.0
+
+# IMU噪声参数（正确值）
+acc_n: 0.009
+gyr_n: 0.12
+acc_w: 4e-05
+gyr_w: 4e-05
+g_norm: 9.802
+
+# 时间同步+回环参数
+estimate_td: 0
+td: 0.0
+load_previous_pose_graph: 0
+save_image: 1

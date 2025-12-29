@@ -1,0 +1,18 @@
+%YAML:1.0
+---
+model_type: PINHOLE
+camera_name: d455_color
+image_width: 848
+image_height: 480
+distortion_model: RADTAN
+distortion_parameters:
+  k1: -0.057359
+  k2: 0.069201
+  p1: -0.000809
+  p2: 0.000624
+  k3: -0.021814
+projection_parameters:
+  fx: 418.9761
+  fy: 418.5735
+  cx: 420.6704
+  cy: 237.0419

@@ -1,0 +1,18 @@
+%YAML:1.0
+---
+model_type: PINHOLE
+camera_type: stereo
+camera_name: right
+image_width: 640
+image_height: 480
+distortion_parameters:
+  k1: -0.012138050918285051
+  k2: 0.02244029339184358
+  p1: -0.013753165428754275
+  p2: 0.002725090438517269
+projection_parameters:
+  fx: 274.4628309070672
+  fy: 273.9261674470783
+  cx: 315.93654481793794
+  cy: 235.779167375461
+

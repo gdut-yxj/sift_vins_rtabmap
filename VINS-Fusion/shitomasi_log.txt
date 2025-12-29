@@ -1,0 +1,19 @@
+[0m[INFO] [1764939125.629744360]: init begins[0m
+config_file: /home/l/vin_ws/src/VINS-Fusion/config/euroc/indemind_imu_config.yaml
+USE_IMU: 1
+IMU_TOPIC: /imsee/imu
+result path /home/l/output//vio.csv
+camera number 2
+[0m[INFO] [1764939125.635033676]: Unsynchronized sensors, online estimate time offset, initial td: 0.0147[0m
+[0m[INFO] [1764939125.635041598]: ROW: 400 COL: 640 [0m
+ exitrinsic cam 0
+  -0.998068   0.0614698 -0.00900176
+ -0.0614171   -0.998094 -0.00602787
+-0.00935513 -0.00546337    0.999941
+    0.06        0 -0.00164
+ exitrinsic cam 1
+  -0.997821    0.062463  -0.0212332
+ -0.0622827   -0.998018 -0.00904748
+ -0.0217563  -0.0077053    0.999734
+ -0.0637139 -0.00775863  0.00733252
+set g     0     0 9.802

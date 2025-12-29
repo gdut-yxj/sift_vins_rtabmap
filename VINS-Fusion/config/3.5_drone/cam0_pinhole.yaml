@@ -1,0 +1,27 @@
+%YAML:1.0
+---
+model_type: PINHOLE
+camera_name: camera
+image_width: 640
+image_height: 480
+
+# Realsense 的 plumb_bob 模型对应 VINS 的 PINHOLE
+# 且 plumb_bob 没有 xi 参数 (mirror_parameters)，必须删除
+
+distortion_parameters:
+   # 对应 camera_info 中的 D 矩阵
+   # D: [k1, k2, t1, t2, k3] -> 这里 D 全是 0
+   k1: 0.0
+   k2: 0.0
+   p1: 0.0
+   p2: 0.0
+
+projection_parameters:
+   # 对应 camera_info 中的 K 矩阵
+   # K: [fx, 0, cx, 0, fy, cy, 0, 0, 1]
+   # 您的数据: [388.001..., 0.0, 319.771..., 0.0, 388.001..., 246.535..., ...]
+   
+   fx: 3.8800119018554690e+02
+   fy: 3.8800119018554690e+02
+   cx: 3.1977172851562500e+02
+   cy: 2.4653561401367188e+02

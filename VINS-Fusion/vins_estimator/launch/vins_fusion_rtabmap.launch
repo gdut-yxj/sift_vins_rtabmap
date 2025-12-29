@@ -1,0 +1,90 @@
+<launch>
+  <arg name="stereo" default="true"/>
+
+  <!-- 是否仅定位（false = 建图 + 回环） -->
+  <arg name="localization" default="false"/>
+
+  <!-- 是否打开 rtabmap 可视化 -->
+  <arg name="rtabmap_viz" default="false"/>
+  <arg name="rviz" default="false"/>
+
+  <arg name="frame_id" default="body"/>
+  <arg name="odom_frame_id" default="world"/>
+  <arg name="map_frame_id" default="map"/>
+
+  <!-- 使用 VINS 里程计 -->
+  <arg name="visual_odometry" default="false"/>
+  <arg name="odom_topic" default="/vins_estimator/odometry"/>
+
+  <!-- 双目图像 -->
+  <arg name="left_image_topic"  default="/camera/infra1/image_rect_raw"/>
+  <arg name="right_image_topic" default="/camera/infra2/image_rect_raw"/>
+
+  <arg name="left_camera_info_topic"  default="/camera/infra1/camera_info"/>
+  <arg name="right_camera_info_topic" default="/camera/infra2/camera_info"/>
+
+  <arg name="approx_sync" default="true"/>
+  <arg name="queue_size" default="10"/>
+  <arg name="wait_for_transform" default="0.5"/>
+
+  <!-- 
+    delete_db_on_start        : 每次启动重新建图
+    DetectionRate             : 回环检测频率 (Hz)
+    LoopThr                   : 回环阈值（越小越激进）
+    STMSize                   : 短期记忆大小
+    ImageBufferSize           : 图像缓存（1 = 关键帧）
+  -->
+  <arg name="rtabmap_args"
+       default="
+         --delete_db_on_start
+         --Rtabmap/DetectionRate 2
+         --Rtabmap/LoopThr 0.11
+         --Mem/STMSize 30
+         --Mem/ImageBufferSize 1
+       "/>
+
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+
+    <!-- 模式 -->
+    <arg name="stereo"            value="$(arg stereo)"/>
+    <arg name="localization"      value="$(arg localization)"/>
+
+    <!-- 可视化 -->
+    <arg name="rtabmap_viz"       value="$(arg rtabmap_viz)"/>
+    <arg name="rviz"              value="$(arg rviz)"/>
+
+    <!-- TF -->
+    <arg name="frame_id"          value="$(arg frame_id)"/>
+    <arg name="odom_frame_id"     value="$(arg odom_frame_id)"/>
+    <arg name="map_frame_id"      value="$(arg map_frame_id)"/>
+
+    <!-- 使用外部里程计 -->
+    <arg name="visual_odometry"   value="$(arg visual_odometry)"/>
+    <arg name="odom_topic"        value="$(arg odom_topic)"/>
+
+    <!-- 图像 -->
+    <arg name="left_image_topic"        value="$(arg left_image_topic)"/>
+    <arg name="right_image_topic"       value="$(arg right_image_topic)"/>
+    <arg name="left_camera_info_topic"  value="$(arg left_camera_info_topic)"/>
+    <arg name="right_camera_info_topic" value="$(arg right_camera_info_topic)"/>
+
+    <!-- 同步 -->
+    <arg name="approx_sync"       value="$(arg approx_sync)"/>
+    <arg name="queue_size"        value="$(arg queue_size)"/>
+    <arg name="wait_for_transform" value="$(arg wait_for_transform)"/>
+
+    <!-- 回环参数 -->
+    <arg name="rtabmap_args"      value="$(arg rtabmap_args)"/>
+
+  </include>
+
+  <!-- 
+    ⚠ 注意：
+    - camera_link 要和 rtabmap 的 frame_id 逻辑一致
+    - 如果你已经在别的地方发布了，这里可以删掉
+  -->
+  <node pkg="tf" type="static_transform_publisher"
+        name="tf_body_to_camera"
+        args="0.018 0 0 0 0 0 body camera_link 100"/>
+
+</launch>

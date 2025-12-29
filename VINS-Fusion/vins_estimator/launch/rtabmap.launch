@@ -1,0 +1,31 @@
+<launch>
+    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+        
+        <arg name="stereo"            value="true"/>
+        <arg name="visual_odometry"   value="false"/>
+        <arg name="rtabmap_viz"       value="true"/>
+        <arg name="rviz"              value="false"/>
+        
+        <arg name="wait_for_transform" value="0.5"/> 
+        
+        <arg name="queue_size"        value="10"/>
+        
+        <arg name="rtabmap_args" value="--delete_db_on_start --Rtabmap/DetectionRate 2 --Kp/MaxFeatures 400 --Rtabmap/ImageBufferSize 1"/>
+
+        <arg name="frame_id"          value="body"/>
+        <arg name="odom_frame_id"     value="world"/>
+        <arg name="map_frame_id"      value="map"/>
+
+        <arg name="odom_topic"        value="/vins_estimator/odometry"/>
+        
+        <arg name="left_image_topic"        value="/camera/infra1/image_rect_raw"/>
+        <arg name="right_image_topic"       value="/camera/infra2/image_rect_raw"/>
+        <arg name="left_camera_info_topic"  value="/camera/infra1/camera_info"/>
+        <arg name="right_camera_info_topic" value="/camera/infra2/camera_info"/>
+
+        <arg name="approx_sync"       value="true"/>
+    </include>
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_glue_body_to_camera" args="0.018 0 0 0 0 0 body camera_link 100" />
+
+    </launch>

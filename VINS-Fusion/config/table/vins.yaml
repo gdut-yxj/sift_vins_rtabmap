@@ -1,0 +1,61 @@
+%YAML:1.0
+---
+# Intel RealSense D455 Table Dataset 配置
+imu: 1
+num_of_cam: 1  # 单目模式，只有RGB相机
+
+# 数据集实际话题
+imu_topic: "/d455/imu"                    # D455 IMU话题
+image0_topic: "/d455/color/image_raw"     # D455 RGB图像
+output_path: "/home/l/output/d455_table02.txt"
+
+# 标定文件路径 (使用绝对路径)
+cam0_calib: "d455_cam.yaml"
+image_width: 848   # 从camera_info获取
+image_height: 480  # 从camera_info获取
+
+# 外参标定 (设为单位矩阵，D455通常IMU和相机已对齐)
+estimate_extrinsic: 0
+body_T_cam0: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [1.0, 0.0, 0.0, 0.0,
+         0.0, 1.0, 0.0, 0.0,
+         0.0, 0.0, 1.0, 0.0,
+         0.0, 0.0, 0.0, 1.0]
+
+# 多线程支持
+multiple_thread: 1
+
+# 特征跟踪参数 (针对D455调整)
+max_cnt: 200           # D455分辨率高，可以增加特征点
+min_dist: 25           # 适当减小间距
+freq: 30               # 匹配相机帧率
+F_threshold: 0.8        # 降低阈值提高鲁棒性
+show_track: 1          # 显示跟踪
+flow_back: 1           # 启用反向光流
+
+# 优化参数
+max_solver_time: 0.05  # 增加时间应对高分辨率
+max_num_iterations: 8
+keyframe_parallax: 8.0 # 降低阈值
+
+# IMU参数 (D455典型值)
+acc_n: 0.05            # 加速度计噪声
+gyr_n: 0.01            # 陀螺仪噪声
+acc_w: 0.0001          # 加速度计随机游走
+gyr_w: 0.00001         # 陀螺仪随机游走
+g_norm: 9.81
+
+# 时间同步
+estimate_td: 1         # 在线估计时间偏移
+td: 0.01               # 初始时间偏移(s)
+
+# 回环检测
+load_previous_pose_graph: 0
+pose_graph_save_path: "/home/l/output"
+save_image: 0
+
+# 特征算法
+sift_flag: 1           # 0=Shi-Tomasi, 1=SIFT-GPU
