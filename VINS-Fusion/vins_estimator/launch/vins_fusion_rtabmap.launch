@@ -1,5 +1,5 @@
 <launch>
-  <arg name="stereo" default="true"/>
+  <arg name="stereo" default="false"/>
 
   <!-- 是否仅定位（false = 建图 + 回环） -->
   <arg name="localization" default="false"/>
@@ -17,12 +17,18 @@
   <arg name="odom_topic" default="/vins_estimator/odometry"/>
 
   <!-- 双目图像 -->
-  <arg name="left_image_topic"  default="/camera/infra1/image_rect_raw"/>
+  <!-- <arg name="left_image_topic"  default="/camera/infra1/image_rect_raw"/>
   <arg name="right_image_topic" default="/camera/infra2/image_rect_raw"/>
 
   <arg name="left_camera_info_topic"  default="/camera/infra1/camera_info"/>
-  <arg name="right_camera_info_topic" default="/camera/infra2/camera_info"/>
+  <arg name="right_camera_info_topic" default="/camera/infra2/camera_info"/> -->
 
+  <!-- RGB-D -->
+  <arg name="rgb_topic"   default="/camera/color/image_raw"/>
+  <arg name="depth_topic" default="/camera/aligned_depth_to_color/image_raw"/>
+  <arg name="camera_info_topic" default="/camera/color/camera_info"/>
+
+  <arg name="rgbd_sync" default="true"/>  
   <arg name="approx_sync" default="true"/>
   <arg name="queue_size" default="10"/>
   <arg name="wait_for_transform" default="0.5"/>
@@ -47,6 +53,7 @@
 
     <!-- 模式 -->
     <arg name="stereo"            value="$(arg stereo)"/>
+    <arg name="rgbd_sync"         value="$(arg rgbd_sync)"/>
     <arg name="localization"      value="$(arg localization)"/>
 
     <!-- 可视化 -->
@@ -63,10 +70,15 @@
     <arg name="odom_topic"        value="$(arg odom_topic)"/>
 
     <!-- 图像 -->
-    <arg name="left_image_topic"        value="$(arg left_image_topic)"/>
+    <!-- <arg name="left_image_topic"        value="$(arg left_image_topic)"/>
     <arg name="right_image_topic"       value="$(arg right_image_topic)"/>
     <arg name="left_camera_info_topic"  value="$(arg left_camera_info_topic)"/>
-    <arg name="right_camera_info_topic" value="$(arg right_camera_info_topic)"/>
+    <arg name="right_camera_info_topic" value="$(arg right_camera_info_topic)"/> -->
+
+    <!-- RGB-D 话题 -->
+    <arg name="rgb_topic"   value="$(arg rgb_topic)"/>
+    <arg name="depth_topic" value="$(arg depth_topic)"/>
+    <arg name="camera_info_topic" value="$(arg camera_info_topic)"/>
 
     <!-- 同步 -->
     <arg name="approx_sync"       value="$(arg approx_sync)"/>

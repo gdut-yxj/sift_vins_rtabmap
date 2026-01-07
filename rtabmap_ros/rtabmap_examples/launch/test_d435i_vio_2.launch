@@ -1,28 +1,12 @@
 <?xml version="1.0"?>
 <launch>
 
-<!-- Example usage of RTAB-Map with VINS-Fusion support for realsense D435i.
-     Make sure to disable the IR emitter or put a tape on the IR emitter to
-     avoid VINS tracking the fixed IR points (that would cause large drifts) -->
-
 <!-- <param name="use_sim_time" value="true"/> -->
 <arg name="rtabmap_viz" default="false"/>
 <arg name="rviz"       default="false"/>
 <arg name="depth_mode" default="true"/>
 
 <!-- <arg name="unite_imu_method" default="copy"/> "copy" or "linear_interpolation" -->
-
-<!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-   <arg name="align_depth"   value="$(arg depth_mode)"/>
-   <arg name="unite_imu_method" value="$(arg unite_imu_method)"/>
-   <arg name="enable_gyro"   value="true"/>
-   <arg name="enable_accel"  value="true"/>
-   <arg name="enable_infra1" value="true"/>
-   <arg name="enable_infra2" value="true"/>
-   <arg name="gyro_fps"      value="200"/>
-   <arg name="accel_fps"     value="250"/>
-   <arg name="enable_sync"   value="true"/>
-</include> -->
 
 <!-- <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_link"
       args="0 0 0 1.5708 0 0 /camera /camera_link 20" /> -->
@@ -35,25 +19,31 @@
    <remap from="/imu/data"     to="/rtabmap/imu"/>
 </node>
 
-<!-- RTAB-Map: depth mode -->
-<!-- We have to launch stereo_odometry externally from rtabmap.launch so that rtabmap can use RGB-D input -->
-
 <include if="$(arg depth_mode)" file="$(find rtabmap_launch)/launch/rtabmap.launch">
-   <arg name="rtabmap_args"      value="--delete_db_on_start"/>
    <arg name="rgb_topic"         value="/camera/color/image_raw"/>
    <arg name="depth_topic"       value="/camera/aligned_depth_to_color/image_raw"/>
    <arg name="camera_info_topic" value="/camera/color/camera_info"/>
    <arg name="visual_odometry"   value="false"/>
    <arg name="odom_topic"        value="/vins_estimator/odometry"/>
-   <!-- <arg name="approx_sync"       value="false"/> -->
+   <arg name="rgbd_sync"         value="true"/>  
+   <arg name="approx_sync"       value="false"/>
    <arg name="frame_id"          value="camera_link"/>
    <arg name="imu_topic"         value="/rtabmap/imu"/>
    <arg name="queue_size"        value="200"/>
-   <!-- <arg name="topic_queue_size"  value="100"/> -->
+   <arg name="odom_frame_id"     value="world"/>
+   <arg name="map_frame_id"      value="map"/>
+   <arg name="wait_for_transform" value="0.5"/>
    <arg name="rtabmap_viz"       value="$(arg rtabmap_viz)"/>
    <arg name="rviz"              value="$(arg rviz)"/>
 
-      <arg name="rtabmap_args"
+     <!-- 
+    delete_db_on_start        : 每次启动重新建图
+    DetectionRate             : 回环检测频率 (Hz)
+    LoopThr                   : 回环阈值（越小越激进）
+    STMSize                   : 短期记忆大小
+    ImageBufferSize           : 图像缓存（1 = 关键帧）
+  -->
+   <arg name="rtabmap_args"
          default="
             --delete_db_on_start
             --Rtabmap/DetectionRate 1
@@ -64,5 +54,6 @@
             --Vis/MinInliers 15 
          "/>
 </include>
+
 
 </launch>
