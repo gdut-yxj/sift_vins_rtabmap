@@ -102,7 +102,25 @@ void GlobalOptimizer::processCallback(
         return;
     }
 
-    rtabmap::CameraModel model = rtabmap_conversions::cameraModelFromROS(*infoMsg);
+    double fx = infoMsg->K[0];
+    double fy = infoMsg->K[4];
+    double cx = infoMsg->K[2];
+    double cy = infoMsg->K[5];
+
+    rtabmap::Transform localTransform(
+            0.99999061, -0.00354202, -0.00249673, -0.01242327, // 第一行: R11, R12, R13, Tx
+            0.00354280,  0.99999368,  0.00030622, -0.00123705, // 第二行: R21, R22, R23, Ty
+            0.00249563, -0.00031506,  0.99999684,  0.02185096  // 第三行: R31, R32, R33, Tz
+        );
+        
+    rtabmap::CameraModel model(
+        "cam", 
+        fx, fy, cx, cy, 
+        localTransform, 
+        0.0, // RGB-D 相机 baseline 设为 0
+        cv::Size(rgb.cols, rgb.rows)
+    );
+    
     rtabmap::Transform odomPose = rosPoseToTransform(odomMsg->pose.pose);
     rtabmap::SensorData data(rgb, depth, model, 0, stamp.toSec());
 
@@ -261,7 +279,6 @@ void GlobalOptimizer::publishVisualization(
             linkMsg.type = iter->second.type();
             linkMsg.transform = rtabmapTransformToRos(iter->second.transform());
             
-            // 【核心修复：可视化协方差填充】
             // 必须手动填充 information matrix，不能留 0
             // 我们从 RTAB-Map 的 link 中读取 matrix
             cv::Mat info = iter->second.infMatrix();
