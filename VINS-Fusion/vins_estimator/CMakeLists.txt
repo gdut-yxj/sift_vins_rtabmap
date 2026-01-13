@@ -15,11 +15,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 #        NO_CMAKE_SYSTEM_PATH
 #)
 
-include_directories(
-        ${catkin_INCLUDE_DIRS}
-        ${OpenCV_INCLUDE_DIRS}  # 标准路径
-        ${EIGEN3_INCLUDE_DIR}
-)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     std_msgs
@@ -49,6 +44,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   ${SIFTGPU_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS} 
 )
 
 catkin_package()
