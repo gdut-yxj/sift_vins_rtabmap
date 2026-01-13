@@ -50,7 +50,7 @@
 
 4. **启动回环节点**`rosrun vins_rtab global_optimizer_node`
 
-## 话题观察
+5. **话题观察**
 
 - **World 坐标系下 body 位姿**：`rostopic echo /vins_estimator/odometry`
 
