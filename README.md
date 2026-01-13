@@ -6,7 +6,7 @@
 
 如果使用 **ARM64 架构**，需要修改默认的 x86 编译参数：
 
-- 打开 `~/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU/makefile`
+- 打开 `~/工作空间/src/sift_vins_rtabmap/SiftGPU/makefile`
 - 找到以下：
   ```makefile
   siftgpu_sse_options = -march=core2 -mfpmath=sse
@@ -19,14 +19,14 @@
 
 - 修改后重新编译：
   ```bash
-  cd ~/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU
+  cd ~/工作空间/src/sift_vins_rtabmap/SiftGPU
   make clean
   make -j$(nproc)
   ```
 
 ### 2. 修改 VINS-Fusion 的 CMakeLists.txt
 
-路径：`~/sift_vins_rtabmap/VINS-Fusion/vins_estimator/CMakeLists.txt`
+路径：`~/工作空间/src/sift_vins_rtabmap/VINS-Fusion/vins_estimator/CMakeLists.txt`
 
 - 原设置：
   ```cmake
@@ -46,10 +46,10 @@
 
 2. **打开 RViz**`roslaunch vins vins_rviz.launch`
 
-3. **启动 VINS 节点并加载参数文件**`rosrun vins vins_node ~/vins_sws/src/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
+3. **启动 VINS 节点并加载参数文件**`rosrun vins vins_node ~/工作空间/src/sift_vins_rtabmap/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
 
    **注意**：如果是在无显示器的上位机上启动 VINS 节点，需要使用虚拟显示（Xvfb）启动：  
-`xvfb-run -s "-screen 0 1024x768x24" rosrun vins vins_node ~/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
+`xvfb-run -s "-screen 0 1024x768x24" rosrun vins vins_node ~/工作空间/src/sift_vins_rtabmap/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
 
 4. **启动回环节点**`rosrun vins_rtab global_optimizer_node`
 
