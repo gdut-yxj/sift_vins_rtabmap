@@ -129,7 +129,7 @@ ifneq ($(siftgpu_enable_opencl), 0)
 	CFLAGS += -lOpenCL
 endif
  
-all: makepath siftgpu server  driver 
+all: makepath siftgpu server 
  
 
 #the dependencies of SiftGPU library 
@@ -193,7 +193,7 @@ endif
 makepath:
 	mkdir -p $(ODIR_SIFTGPU)
 	mkdir -p $(BIN_DIR) 
-	sed -i -e 's/\\/\//g' demos/*.bat
+# 	sed -i -e 's/\\/\//g' demos/*.bat
  
 clean:
 	rm -f $(ODIR_SIFTGPU)/*.o

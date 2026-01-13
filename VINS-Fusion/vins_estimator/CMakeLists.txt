@@ -3,17 +3,7 @@ project(vins)
 
 set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 set(CMAKE_CXX_FLAGS "-std=c++11")
-#-DEIGEN_USE_MKL_ALL")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
-
-#set(OpenCV_DIR "/home/l/opencv_install/4.5.5/lib/cmake/opencv4")
-#find_package(OpenCV 4.5.5 EXACT REQUIRED
-#        NO_DEFAULT_PATH
-#        NO_CMAKE_ENVIRONMENT_PATH
-#        NO_CMAKE_PATH
-#        NO_SYSTEM_ENVIRONMENT_PATH
-#        NO_CMAKE_SYSTEM_PATH
-#)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
@@ -25,21 +15,26 @@ find_package(catkin REQUIRED COMPONENTS
     camera_models
     image_transport)
 
-
+# OpenCV
 find_package(OpenCV 4.2 EXACT REQUIRED)
 add_definitions(-DOPENCV_TRAITS_ENABLE_DEPRECATED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
 
+# Ceres
+set(Ceres_DIR /usr/lib/cmake/Ceres)
+find_package(Ceres REQUIRED)
+
 #siftgpu
 set(SIFTGPU_INCLUDE_DIR "/home/dangeidon/vins_sws/src/SiftGPU/src/SiftGPU")
-
 link_directories("/home/dangeidon/vins_sws/src/SiftGPU/bin")
+
+# Eigen3
+find_package(Eigen3)
 
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(Eigen3)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
@@ -86,6 +81,7 @@ target_link_libraries(kitti_odom_test vins_lib)
 
 add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
 target_link_libraries(kitti_gps_test vins_lib) 
+
 #set_target_properties(vins_node PROPERTIES
 #        INSTALL_RPATH "/home/l/opencv_install/4.5.5/lib"
 #        BUILD_WITH_INSTALL_RPATH TRUE
