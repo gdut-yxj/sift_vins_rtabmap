@@ -48,7 +48,7 @@
 
 3. **启动 VINS 节点并加载参数文件**`rosrun vins vins_node ~/vins_sws/src/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
 
-**注意**：如果是在无显示器的上位机上启动 VINS 节点，需要使用虚拟显示（Xvfb）启动：  
+   **注意**：如果是在无显示器的上位机上启动 VINS 节点，需要使用虚拟显示（Xvfb）启动：  
 `xvfb-run -s "-screen 0 1024x768x24" rosrun vins vins_node ~/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
 
 4. **启动回环节点**`rosrun vins_rtab global_optimizer_node`
