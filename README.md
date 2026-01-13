@@ -40,8 +40,6 @@
   link_directories("~/工作空间/src/SiftGPU/bin")
   ```
 
----
-
 ## 使用步骤
 
 1. **开启相机**`roslaunch realsense2_camera rs_camera.launch`
@@ -52,11 +50,9 @@
 
 4. **启动回环节点**`rosrun vins_rtab global_optimizer_node`
 
----
-
 ## 话题观察
 
 - **World 坐标系下 body 位姿**：`rostopic echo /vins_estimator/odometry`
 
 - **Map 坐标系下 body 位姿**：`rostopic echo /rtabmap/global_odom`
-```
+
