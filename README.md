@@ -1,4 +1,3 @@
-```
 # SiftGPU + VINS-Fusion + RTAB-Map
 
 ## 使用注意事项
@@ -24,8 +23,6 @@
   make clean
   make -j$(nproc)
   ```
-
----
 
 ### 2. 修改 VINS-Fusion 的 CMakeLists.txt
 
