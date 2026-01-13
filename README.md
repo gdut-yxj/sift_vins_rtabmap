@@ -6,8 +6,8 @@
 
 如果使用 **ARM64 架构**，需要修改默认的 x86 编译参数：
 
-- 打开 `Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU/makefile`
-- 找到以下两处：
+- 打开 `~/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU/makefile`
+- 找到以下：
   ```makefile
   siftgpu_sse_options = -march=core2 -mfpmath=sse
   ```
@@ -44,37 +44,19 @@
 
 ## 使用步骤
 
-1. **开启相机**
-   ```bash
-   roslaunch realsense2_camera rs_camera.launch
-   ```
+1. **开启相机**`roslaunch realsense2_camera rs_camera.launch`
 
-2. **打开 RViz**
-   ```bash
-   roslaunch vins vins_rviz.launch
-   ```
+2. **打开 RViz**`roslaunch vins vins_rviz.launch`
 
-3. **启动 VINS 节点并加载参数文件**
-   ```bash
-   rosrun vins vins_node ~/vins_sws/src/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml
-   ```
+3. **启动 VINS 节点并加载参数文件**`rosrun vins vins_node ~/vins_sws/src/VINS-Fusion/config/3.5_drone/realsense_stereo_imu_config.yaml`
 
-4. **启动回环节点**
-   ```bash
-   rosrun vins_rtab global_optimizer_node
-   ```
+4. **启动回环节点**`rosrun vins_rtab global_optimizer_node`
 
 ---
 
 ## 话题观察
 
-- **World 坐标系下 body 位姿**：
-  ```bash
-  rostopic echo /vins_estimator/odometry
-  ```
+- **World 坐标系下 body 位姿**：`rostopic echo /vins_estimator/odometry`
 
-- **Map 坐标系下 body 位姿**：
-  ```bash
-  rostopic echo /rtabmap/global_odom
-  ```
+- **Map 坐标系下 body 位姿**：`rostopic echo /rtabmap/global_odom`
 ```
