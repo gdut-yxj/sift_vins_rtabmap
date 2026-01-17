@@ -16,13 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
     image_transport)
 
 # OpenCV
-find_package(OpenCV 4.2 EXACT REQUIRED)
+find_package(OpenCV REQUIRED)
 add_definitions(-DOPENCV_TRAITS_ENABLE_DEPRECATED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
 
 # Ceres
-set(Ceres_DIR /usr/lib/cmake/Ceres)
 find_package(Ceres REQUIRED)
 
 #siftgpu
@@ -32,13 +29,11 @@ link_directories("/home/dangeidon/vins_sws/src/SiftGPU/bin")
 # Eigen3
 find_package(Eigen3)
 
-include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
-
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   ${SIFTGPU_INCLUDE_DIR}
+  ${CERES_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS} 
 )
 
