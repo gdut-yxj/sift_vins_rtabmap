@@ -2,7 +2,6 @@
 
 // ROS 工具库
 #include <cv_bridge/cv_bridge.h>
-#include <rtabmap_conversions/MsgConversion.h> 
 #include <rtabmap_msgs/MapGraph.h>
 #include <rtabmap_msgs/MapData.h>
 

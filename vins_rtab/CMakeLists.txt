@@ -13,8 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_eigen
   tf2_geometry_msgs
-  # rtabmap_ros        # 用于消息定义和部分辅助转换
-  rtabmap_conversions # 关键：ROS消息到RTAB-Map类型的转换工具
   rtabmap_msgs
   pcl_conversions
   pcl_ros
