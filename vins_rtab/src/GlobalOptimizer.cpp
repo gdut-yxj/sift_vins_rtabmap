@@ -15,7 +15,11 @@
 namespace vins_rtabmap_fusion {
 
 GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
-    nh_(nh), pnh_(pnh), mapToOdom_(rtabmap::Transform::getIdentity())
+    nh_(nh), pnh_(pnh), 
+    mapToOdom_(rtabmap::Transform::getIdentity()), 
+    tfListener_(tfBuffer_),
+    gotRGBInfo_(false),
+    gotDepthInfo_(false)
 {
     // 参数配置
     pnh_.param<std::string>("map_frame_id", mapFrameId_, "map");
@@ -58,24 +62,31 @@ GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
     rtabmap_ = std::make_unique<rtabmap::Rtabmap>();
     rtabmap_->init(parameters, dbPath);
 
+    vinsBodyToCam_ = rtabmap::Transform(
+        0.99999061, -0.00354202, -0.00249673, -0.01242327, 
+        0.00354280,  0.99999368,  0.00030622, -0.00123705, 
+        0.00249563, -0.00031506,  0.99999684,  0.02185096  
+    );
+
     // 设置发布者
     pubGlobalPath_ = nh_.advertise<nav_msgs::Path>("/rtabmap/global_path", 1);
     pubMapGraph_ = nh_.advertise<rtabmap_msgs::MapGraph>("/rtabmap/mapGraph", 1);
     pubGlobalOdom_ = nh_.advertise<nav_msgs::Odometry>("/rtabmap/global_odom", 1);  
     
-    // 订阅与同步
+    // 同步与订阅
     subRGB_.subscribe(nh_, "/camera/color/image_raw", 1);
-    subDepth_.subscribe(nh_, "/camera/aligned_depth_to_color/image_raw", 1);
-    subInfo_.subscribe(nh_, "/camera/color/camera_info", 1);
+    subDepth_.subscribe(nh_, "/camera/depth/image_rect_raw", 1);
     subOdom_.subscribe(nh_, "/vins_estimator/odometry", 1);
+    subRGBInfo_ = nh_.subscribe("/camera/color/camera_info", 1, &GlobalOptimizer::rgbInfoCallback, this);
+    subDepthInfo_ = nh_.subscribe("/camera/depth/camera_info", 1, &GlobalOptimizer::depthInfoCallback, this);
 
     sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(
-        SyncPolicy(10), subRGB_, subDepth_, subInfo_, subOdom_
+        SyncPolicy(50), subRGB_, subDepth_, subOdom_
     );
 
-    sync_->registerCallback(boost::bind(&GlobalOptimizer::processCallback, this, _1, _2, _3, _4));
+    sync_->registerCallback(boost::bind(&GlobalOptimizer::processCallback, this, _1, _2, _3));
 
-    ROS_INFO("GlobalOptimizer initialized. Listening for VINS data...");
+    ROS_INFO("GlobalOptimizer initialized. Listening for CameraInfo and VINS data...");
 }
 
 GlobalOptimizer::~GlobalOptimizer() {
@@ -84,54 +95,103 @@ GlobalOptimizer::~GlobalOptimizer() {
     }
 }
 
+void GlobalOptimizer::rgbInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg) {
+    if (!gotRGBInfo_) {
+        rgbModel_ = rtabmap::CameraModel(
+            "rgb",
+            msg->K[0], msg->K[4], msg->K[2], msg->K[5],
+            vinsBodyToCam_,  // <--- 直接传入真正的外参
+            0.0, 
+            cv::Size(msg->width, msg->height)
+        );
+        gotRGBInfo_ = true;
+        ROS_INFO("RGB Model Initialized with VINS Extrinsics.");
+        subRGBInfo_.shutdown(); 
+    }
+}
+
+// [新增] Depth内参回调：收到一次后关闭订阅
+void GlobalOptimizer::depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg) {
+    if (!gotDepthInfo_) {
+        depthModel_ = rtabmap::CameraModel(
+            "depth",
+            msg->K[0], msg->K[4], msg->K[2], msg->K[5],
+            rtabmap::Transform::getIdentity(), 
+            0.0, 
+            cv::Size(msg->width, msg->height)
+        );
+        gotDepthInfo_ = true;
+        ROS_INFO("Depth Model Initialized.");
+        subDepthInfo_.shutdown(); 
+    }
+}
+
 void GlobalOptimizer::processCallback(
     const sensor_msgs::ImageConstPtr& rgbMsg,
     const sensor_msgs::ImageConstPtr& depthMsg,
-    const sensor_msgs::CameraInfoConstPtr& infoMsg,
     const nav_msgs::OdometryConstPtr& odomMsg)
 {
+    if (!gotRGBInfo_ || !gotDepthInfo_) {
+        ROS_WARN_THROTTLE(2.0, "Waiting for CameraInfo...");
+        return;
+    }
+    ROS_INFO_THROTTLE(5.0, "GlobalOptimizer is running: Processing frames");
+
     ros::Time stamp = rgbMsg->header.stamp;
 
     // --- 数据转换 ---
     cv::Mat rgb, depth;
     try {
         rgb = cv_bridge::toCvShare(rgbMsg, "bgr8")->image;
-        depth = cv_bridge::toCvShare(depthMsg)->image; 
+        depth = cv_bridge::toCvShare(depthMsg)->image;
     } catch (cv_bridge::Exception& e) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
 
-    double fx = infoMsg->K[0];
-    double fy = infoMsg->K[4];
-    double cx = infoMsg->K[2];
-    double cy = infoMsg->K[5];
-
-    rtabmap::Transform localTransform(
-            0.99999061, -0.00354202, -0.00249673, -0.01242327, // 第一行: R11, R12, R13, Tx
-            0.00354280,  0.99999368,  0.00030622, -0.00123705, // 第二行: R21, R22, R23, Ty
-            0.00249563, -0.00031506,  0.99999684,  0.02185096  // 第三行: R31, R32, R33, Tz
+    rtabmap::Transform T_color_depth;
+    try {
+        geometry_msgs::TransformStamped tfStamped;
+        tfStamped = tfBuffer_.lookupTransform(
+            rgbMsg->header.frame_id,      // target: color frame
+            depthMsg->header.frame_id,    // source: depth frame
+            stamp,
+            ros::Duration(0.05) 
         );
         
-    rtabmap::CameraModel model(
-        "cam", 
-        fx, fy, cx, cy, 
-        localTransform, 
-        0.0, // RGB-D 相机 baseline 设为 0
-        cv::Size(rgb.cols, rgb.rows)
-    );
-    
-    rtabmap::Transform odomPose = rosPoseToTransform(odomMsg->pose.pose);
-    rtabmap::SensorData data(rgb, depth, model, 0, stamp.toSec());
+        geometry_msgs::Transform t = tfStamped.transform;
+        T_color_depth = rtabmap::Transform(
+            t.translation.x, t.translation.y, t.translation.z,
+            t.rotation.x, t.rotation.y, t.rotation.z, t.rotation.w
+        );
+    } catch (tf2::TransformException &ex) {
+        ROS_WARN_THROTTLE(2.0, "Could not get extrinsics RGB->Depth: %s", ex.what());
+        return; 
+    }
 
-    // --- 协方差输入保护 (防止输入端崩溃) ---
-    // 强制对角化 + 限幅
+    // --- 深度对齐 (核心) ---
+    // 使用 util2d::registerDepth 将 depth 对齐到 rgbModel 视角
+    cv::Mat depthRegistered = rtabmap::util2d::registerDepth(
+        depth,
+        depthModel_.K(),
+        rgbModel_.imageSize(),
+        rgbModel_.K(),
+        T_color_depth
+    );
+
+    if (depthRegistered.empty()) {
+        return;
+    }
+
+    rtabmap::SensorData data(rgb, depthRegistered, rgbModel_, 0, stamp.toSec());
+    rtabmap::Transform odomPose = rosPoseToTransform(odomMsg->pose.pose);
+
+    // 协方差输入保护
     cv::Mat covariance = cv::Mat::eye(6, 6, CV_64F); 
     const auto& raw_cov = odomMsg->pose.covariance;
     
     double min_cov = 1e-6; 
     double max_cov = 0.5;  
-
     for(int i = 0; i < 6; ++i) {
         double val = raw_cov[i*6 + i]; 
         if(std::isnan(val) || std::isinf(val)) val = max_cov;
@@ -140,8 +200,7 @@ void GlobalOptimizer::processCallback(
         covariance.at<double>(i, i) = val;
     }
 
-    // --- 执行 RTAB-Map 处理 ---
-    // 使用 try-catch 包裹，因为 process 内部也可能抛出异常
+    // 执行 RTAB-Map 处理
     bool processed = false;
     try {
         processed = rtabmap_->process(data, odomPose, covariance);

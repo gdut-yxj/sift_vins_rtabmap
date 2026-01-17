@@ -12,6 +12,7 @@
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 // RTAB-Map 核心库头文件 
@@ -19,6 +20,9 @@
 #include <rtabmap/core/SensorData.h>
 #include <rtabmap/core/Transform.h>
 #include <rtabmap/core/Parameters.h>
+// #include <rtabmap/core/util3d.h>
+// #include <rtabmap/core/util3d_registration.h>
+#include <rtabmap/core/util2d.h>
 #include <rtabmap/utilite/ULogger.h>
 
 // C++ 标准库
@@ -29,11 +33,10 @@
 
 namespace vins_rtabmap_fusion {
 
-// 定义时间同步策略：包含 RGB, Depth, Info, Odom五路数据
+// 定义时间同步策略：包含 RGB, Depth, rgbInfo, depthInfo, Odom五路数据
 typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::Image,
     sensor_msgs::Image,
-    sensor_msgs::CameraInfo,
     nav_msgs::Odometry
 > SyncPolicy;
 
@@ -49,9 +52,11 @@ private:
     void processCallback(
         const sensor_msgs::ImageConstPtr& rgbMsg,
         const sensor_msgs::ImageConstPtr& depthMsg,
-        const sensor_msgs::CameraInfoConstPtr& infoMsg,
         const nav_msgs::OdometryConstPtr& odomMsg
     );
+
+    void rgbInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
+    void depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
 
     /**
      * @brief 辅助函数：将ROS位姿转换为RTAB-Map变换矩阵
@@ -85,8 +90,10 @@ private:
     // --- 消息过滤器订阅者 ---
     message_filters::Subscriber<sensor_msgs::Image> subRGB_;
     message_filters::Subscriber<sensor_msgs::Image> subDepth_;
-    message_filters::Subscriber<sensor_msgs::CameraInfo> subInfo_;
     message_filters::Subscriber<nav_msgs::Odometry> subOdom_;
+
+    ros::Subscriber subRGBInfo_;
+    ros::Subscriber subDepthInfo_;
 
     // --- 同步器 ---
     std::unique_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
@@ -96,6 +103,9 @@ private:
     ros::Publisher pubMapGraph_; 
     ros::Publisher pubGlobalOdom_;
 
+    // TF 监听相关
+    tf2_ros::Buffer tfBuffer_;
+    tf2_ros::TransformListener tfListener_;
     // --- TF 广播 ---
     tf2_ros::TransformBroadcaster tfBroadcaster_;
 
@@ -109,8 +119,14 @@ private:
     
     rtabmap::Transform mapToOdom_; // 累积漂移修正矩阵
     std::mutex mapToOdomMutex_;    // 保护 TF 更新的互斥锁
-    
-    bool pauseMapping_;
+
+    bool gotRGBInfo_;
+    bool gotDepthInfo_;
+    sensor_msgs::CameraInfo rgbInfo_;
+    sensor_msgs::CameraInfo depthInfo_;
+    rtabmap::CameraModel rgbModel_;
+    rtabmap::CameraModel depthModel_;
+    rtabmap::Transform vinsBodyToCam_;
 };
 
 } 
