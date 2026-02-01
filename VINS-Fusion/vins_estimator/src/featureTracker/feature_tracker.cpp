@@ -607,14 +607,14 @@ void FeatureTracker::drawTrack(const cv::Mat& imLeft, const cv::Mat& imRight,
 
     //draw prediction
 
-    // for (size_t i = 0; i < predict_pts_debug.size(); i++)
-    // {
-    //     cv::circle(imTrack, predict_pts_debug[i], 2, cv::Scalar(0, 170, 255), 2);
-    // }
+    for (size_t i = 0; i < predict_pts_debug.size(); i++)
+    {
+        cv::circle(imTrack, predict_pts_debug[i], 2, cv::Scalar(0, 170, 255), 2);
+    }
 
     // printf("predict pts size %d \n", (int)predict_pts_debug.size());
-    // cv::imshow("Feature Tracking", imTrack);
-    // cv::waitKey(1);
+    cv::imshow("Feature Tracking", imTrack);
+    cv::waitKey(1);
     // cv::Mat imCur2Compress;
     // cv::resize(imCur2, imCur2Compress, cv::Size(cols, rows / 2));
 }
