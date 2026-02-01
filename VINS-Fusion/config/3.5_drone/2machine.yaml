@@ -1,0 +1,107 @@
+%YAML:1.0
+
+# =========================
+# common parameters
+# =========================
+imu: 1
+num_of_cam: 2
+
+imu_topic: "/camera/imu"
+image0_topic: "/camera/infra1/image_rect_raw"
+image1_topic: "/camera/infra2/image_rect_raw"
+output_path: "/home/dangeidon/vins_sws/src/VINS-Fusion/vins_estimator/output"
+
+cam0_calib: "cam0_pinhole.yaml"
+cam1_calib: "cam1_pinhole.yaml"
+image_width: 640
+image_height: 480
+
+
+# =========================
+# Extrinsic parameters
+# =========================
+estimate_extrinsic: 0
+
+# ---------- body_T_cam0 ----------
+# 来自 cam0.T_cam_imu （标定）
+body_T_cam0: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [
+     0.9999906101567526,  0.0035427990435401035,  0.0024956308344461085,  0.012373005054764295,
+    -0.0035420236212433116,  0.9999936773819172, -0.0003150632566424422,  0.0011999204812027228,
+    -0.0024967312613297554,  0.0003062207148823382,  0.9999968362759363, -0.02188152572892456,
+     0.0, 0.0, 0.0, 1.0
+   ]
+
+# ---------- body_T_cam1 ----------
+# 来自 cam1.T_cam_imu （标定）
+body_T_cam1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [
+     0.9999886022107507,  0.003745848095651031,  0.0029604173073345236, -0.03922738594495189,
+    -0.00374155307004699,  0.9999919418064748, -0.0014550267145974026,  0.0012349371801486167,
+    -0.0029658437607669413,  0.0014439335720446797,  0.9999945593985131, -0.021872565220068287,
+     0.0, 0.0, 0.0, 1.0
+   ]
+
+
+# =========================
+# Multiple thread
+# =========================
+multiple_thread: 1
+
+
+# =========================
+# Feature tracker
+# =========================
+max_cnt: 250
+min_dist: 25
+freq: 10
+F_threshold: 1.0
+show_track: 1
+show_margin: 1
+flow_back: 1
+
+
+# =========================
+# Optimization
+# =========================
+max_solver_time: 0.04
+max_num_iterations: 8
+keyframe_parallax: 10.0
+
+
+# =========================
+# IMU parameters
+# （已全部替换为标定值）
+# =========================
+acc_n: 0.018021295733269733        # accelerometer_noise_density
+gyr_n: 0.0033053521476805133       # gyroscope_noise_density
+acc_w: 0.0003654169215194401       # accelerometer_random_walk
+gyr_w: 1.925068326145136e-05       # gyroscope_random_walk
+g_norm: 9.805
+
+
+# =========================
+# Time offset
+# =========================
+estimate_td: 0
+td: 0.00588    # 来自 cam0 / cam1 timeshift_cam_imu
+
+
+# =========================
+# Loop closure
+# =========================
+load_previous_pose_graph: 0
+pose_graph_save_path: "/home/l/output/pose_graph/"
+save_image: 0
+
+
+# =========================
+# Feature algorithm
+# =========================
+sift_flag: 1      # 0=Shi-Tomasi, 1=SIFT-GPU
