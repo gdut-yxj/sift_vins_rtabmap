@@ -84,6 +84,9 @@ GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
         SyncPolicy(50), subRGB_, subDepth_, subOdom_
     );
 
+    sync_->getPolicy()->setMaxIntervalDuration(ros::Duration(0.05)); // 允许 50ms 的误差
+    sync_->getPolicy()->setAgePenalty(0.1);                         // 允许一定的延迟
+
     sync_->registerCallback(boost::bind(&GlobalOptimizer::processCallback, this, _1, _2, _3));
 
     ROS_INFO("GlobalOptimizer initialized. Listening for CameraInfo and VINS data...");
@@ -110,7 +113,6 @@ void GlobalOptimizer::rgbInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg
     }
 }
 
-// [新增] Depth内参回调：收到一次后关闭订阅
 void GlobalOptimizer::depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg) {
     if (!gotDepthInfo_) {
         depthModel_ = rtabmap::CameraModel(
