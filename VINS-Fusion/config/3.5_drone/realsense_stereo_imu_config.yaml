@@ -8,7 +8,7 @@ num_of_cam: 2
 imu_topic: "/camera/imu"
 image0_topic: "/camera/infra1/image_rect_raw"
 image1_topic: "/camera/infra2/image_rect_raw"
-output_path: "/home/dangeidon/vins_sws/src/VINS-Fusion/vins_estimator/output"
+output_path: "/home/mininx/vins_output"
 
 cam0_calib: "cam0_pinhole.yaml"
 cam1_calib: "cam1_pinhole.yaml"

@@ -22,7 +22,7 @@ CUDA_INSTALL_PATH = /usr/local/cuda
 #--------------------------------------------------------------------------------------------------
 # enable SSE optimization for GL-based implementations
 siftgpu_enable_sse = 1
-siftgpu_sse_options = -march=core2 -mfpmath=sse
+siftgpu_sse_options = 
 #--------------------------------------------------------------------------------------------------
 # openGL context creation.  1 for glut, 0 for xlib
 siftgpu_prefer_glut = 1
@@ -60,7 +60,7 @@ CFLAGS = -I$(INC_DIR) -fPIC  -L/usr/lib -L./bin -L./lib -Wall -Wno-deprecated -p
 
 #simple hack to repalce the native flat on OSX because gcc version is low
 ifneq ($(DARWIN),) 
-	siftgpu_sse_options = -march=core2 -mfpmath=sse
+	siftgpu_sse_options = 
 endif
 
 ifneq ($(siftgpu_enable_sse), 0)

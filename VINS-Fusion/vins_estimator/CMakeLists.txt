@@ -23,8 +23,8 @@ add_definitions(-DOPENCV_TRAITS_ENABLE_DEPRECATED)
 find_package(Ceres REQUIRED)
 
 #siftgpu
-set(SIFTGPU_INCLUDE_DIR "/home/dangeidon/vins_sws/src/SiftGPU/src/SiftGPU")
-link_directories("/home/dangeidon/vins_sws/src/SiftGPU/bin")
+set(SIFTGPU_INCLUDE_DIR "/home/mininx/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU/src/SiftGPU")
+link_directories("/home/mininx/Fast-Drone-250/src/realflight_modules/sift_vins_rtabmap/SiftGPU/bin")
 
 # Eigen3
 find_package(Eigen3)

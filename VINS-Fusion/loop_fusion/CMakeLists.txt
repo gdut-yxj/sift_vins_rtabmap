@@ -30,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
     )
 
 
-find_package(OpenCV 4.2 EXACT REQUIRED)
+find_package(OpenCV EXACT REQUIRED)
 add_definitions(-DOPENCV_TRAITS_ENABLE_DEPRECATED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
