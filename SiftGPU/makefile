@@ -7,13 +7,13 @@ siftgpu_enable_server = 0
 siftgpu_enable_opencl = 0
 #------------------------------------------------------------------------------------------------
 # enable CUDA-based SiftGPU?
-simple_find_cuda := $(shell type nvcc>/dev/null 2>&1; echo $$?)
-$(info ----- value $(simple_find_cuda) -----)
-ifeq ($(simple_find_cuda), 0)
- 	siftgpu_enable_cuda = 1
-else
-	siftgpu_enable_cuda = 0
-endif
+# simple_find_cuda := $(shell type nvcc>/dev/null 2>&1; echo $$?)
+# $(info ----- value $(simple_find_cuda) -----)
+# ifeq ($(simple_find_cuda), 0)
+siftgpu_enable_cuda = 1
+# else
+# 	siftgpu_enable_cuda = 0
+# endif
 
 CUDA_INSTALL_PATH = /usr/local/cuda
 #change  additional  settings, like SM version here if it is not 1.0 (eg. -arch sm_13 for GTX280)

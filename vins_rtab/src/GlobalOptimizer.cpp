@@ -1,16 +1,12 @@
 #include "vins_rtab/GlobalOptimizer.hpp"
-
-// ROS 工具库
 #include <cv_bridge/cv_bridge.h>
 #include <rtabmap_conversions/MsgConversion.h> 
 #include <rtabmap_msgs/MapGraph.h>
 #include <rtabmap_msgs/MapData.h>
-
-// RTAB-Map 工具库
 #include <rtabmap/utilite/UFile.h>
 #include <rtabmap/utilite/UDirectory.h>
 #include <rtabmap/utilite/ULogger.h>
-#include <rtabmap/utilite/UException.h> // 引入异常头文件
+#include <rtabmap/utilite/UException.h> 
 
 namespace vins_rtabmap_fusion {
 
@@ -21,7 +17,6 @@ GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
     gotRGBInfo_(false),
     gotDepthInfo_(false)
 {
-    // 参数配置
     pnh_.param<std::string>("map_frame_id", mapFrameId_, "map");
     pnh_.param<std::string>("odom_frame_id", odomFrameId_, "world");
     pnh_.param<std::string>("robot_frame_id", robotFrameId_, "body");
@@ -34,19 +29,20 @@ GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
 
     // 初始化 RTAB-Map 参数
     rtabmap::ParametersMap parameters;
+    // 启用 RGB-D 模式
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kRGBDEnabled(), "true"));
+    // 回环检测阈值
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kRtabmapLoopThr(), "0.20")); 
-    
-    // 关闭邻接边重优化，完全信任 VINS 里程计
+    // 关闭邻接边重优化
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kRGBDNeighborLinkRefining(), "false")); 
+    // 关闭空间邻接边
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kRGBDProximityBySpace(), "false")); 
-    
+    // 不限制RTAB-Map处理时间
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kRtabmapTimeThr(), "0")); 
+    // 启用slam模式而不是纯定位模式
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kMemIncrementalMemory(), "true"));
-    
     // 优化器配置
     parameters.insert(rtabmap::ParametersPair(rtabmap::Parameters::kOptimizerStrategy(), "1")); // 1=g2o
-    
     // 日志设置
     ULogger::setType(ULogger::kTypeConsole);
     ULogger::setLevel(ULogger::kWarning);
@@ -62,30 +58,28 @@ GlobalOptimizer::GlobalOptimizer(ros::NodeHandle& nh, ros::NodeHandle& pnh) :
     rtabmap_ = std::make_unique<rtabmap::Rtabmap>();
     rtabmap_->init(parameters, dbPath);
 
+    // VINS 相机外参 (body 到 cam0)
     vinsBodyToCam_ = rtabmap::Transform(
         0.99999061, -0.00354202, -0.00249673, -0.01242327, 
         0.00354280,  0.99999368,  0.00030622, -0.00123705, 
         0.00249563, -0.00031506,  0.99999684,  0.02185096  
     );
 
-    // 设置发布者
     pubGlobalPath_ = nh_.advertise<nav_msgs::Path>("/rtabmap/global_path", 1);
     pubMapGraph_ = nh_.advertise<rtabmap_msgs::MapGraph>("/rtabmap/mapGraph", 1);
     pubGlobalOdom_ = nh_.advertise<nav_msgs::Odometry>("/rtabmap/global_odom", 1);  
     
-    // 同步与订阅
-    subRGB_.subscribe(nh_, "/camera/color/image_raw", 1);
-    subDepth_.subscribe(nh_, "/camera/depth/image_rect_raw", 1);
-    subOdom_.subscribe(nh_, "/vins_estimator/odometry", 1);
+    subRGB_.subscribe(nh_, "/camera/color/image_raw", 10);
+    subDepth_.subscribe(nh_, "/camera/depth/image_rect_raw", 10);
+    subOdom_.subscribe(nh_, "/vins_estimator/imu_propagate", 100);
     subRGBInfo_ = nh_.subscribe("/camera/color/camera_info", 1, &GlobalOptimizer::rgbInfoCallback, this);
     subDepthInfo_ = nh_.subscribe("/camera/depth/camera_info", 1, &GlobalOptimizer::depthInfoCallback, this);
 
     sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(
-        SyncPolicy(50), subRGB_, subDepth_, subOdom_
+        SyncPolicy(100), subRGB_, subDepth_, subOdom_
     );
-
-    sync_->getPolicy()->setMaxIntervalDuration(ros::Duration(0.05)); // 允许 50ms 的误差
-    sync_->getPolicy()->setAgePenalty(0.1);                         // 允许一定的延迟
+    sync_->getPolicy()->setMaxIntervalDuration(ros::Duration(0.01)); 
+    sync_->getPolicy()->setAgePenalty(0.1);                         
 
     sync_->registerCallback(boost::bind(&GlobalOptimizer::processCallback, this, _1, _2, _3));
 
@@ -103,12 +97,12 @@ void GlobalOptimizer::rgbInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg
         rgbModel_ = rtabmap::CameraModel(
             "rgb",
             msg->K[0], msg->K[4], msg->K[2], msg->K[5],
-            vinsBodyToCam_,  // <--- 直接传入真正的外参
+            vinsBodyToCam_, 
             0.0, 
             cv::Size(msg->width, msg->height)
         );
         gotRGBInfo_ = true;
-        ROS_INFO("RGB Model Initialized with VINS Extrinsics.");
+        // ROS_INFO("RGB Model Initialized with VINS Extrinsics.");
         subRGBInfo_.shutdown(); 
     }
 }
@@ -123,7 +117,7 @@ void GlobalOptimizer::depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& m
             cv::Size(msg->width, msg->height)
         );
         gotDepthInfo_ = true;
-        ROS_INFO("Depth Model Initialized.");
+        // ROS_INFO("Depth Model Initialized.");
         subDepthInfo_.shutdown(); 
     }
 }
@@ -171,8 +165,7 @@ void GlobalOptimizer::processCallback(
         return; 
     }
 
-    // --- 深度对齐 (核心) ---
-    // 使用 util2d::registerDepth 将 depth 对齐到 rgbModel 视角
+    // 将 depth 对齐到 rgbModel 视角
     cv::Mat depthRegistered = rtabmap::util2d::registerDepth(
         depth,
         depthModel_.K(),
@@ -211,7 +204,7 @@ void GlobalOptimizer::processCallback(
         return;
     }
 
-    // --- D. 后处理与可视化 ---
+    // 后处理与可视化 
     if (processed) {
             int loopId = rtabmap_->getLoopClosureId();
             
@@ -228,15 +221,12 @@ void GlobalOptimizer::processCallback(
                     
                     if (!poses.empty()) {
                         // 获取当前最新帧在 map 下的优化位姿
-                        // 注意：这里要确保取到的是当前处理的这一帧的ID
                         int currentId = rtabmap_->getLastLocationId();
                         if (poses.find(currentId) != poses.end()) {
                             rtabmap::Transform mapPose = poses.at(currentId);
-                            
                             // 计算修正量 T_map_world = T_map_body * T_world_body^-1
                             // 这样 T_map_world * T_world_body = T_map_body
                             rtabmap::Transform mapToOdomCorrection = mapPose * odomPose.inverse();
-
                             {
                                 std::lock_guard<std::mutex> lock(mapToOdomMutex_);
                                 mapToOdom_ = mapToOdomCorrection;
@@ -249,11 +239,11 @@ void GlobalOptimizer::processCallback(
             }
             
             // 只有当有订阅者时才去获取图并发布
-            if (pubGlobalPath_.getNumSubscribers() > 0 || pubMapGraph_.getNumSubscribers() > 0 || pubGlobalOdom_.getNumSubscribers() > 0) {
+            if (pubGlobalPath_.getNumSubscribers() > 0 || pubMapGraph_.getNumSubscribers() > 0) {
                 std::map<int, rtabmap::Transform> poses;
                 std::multimap<int, rtabmap::Link> constraints;
                 try {
-                    rtabmap_->getGraph(poses, constraints, true, true);
+                    // rtabmap_->getGraph(poses, constraints, true, true);
                     publishVisualization(poses, constraints, stamp, mapFrameId_);
                 } catch(...) {}
             }
@@ -281,8 +271,6 @@ void GlobalOptimizer::processCallback(
             globalOdomMsg.pose.pose.position.y = tRos.translation.y;
             globalOdomMsg.pose.pose.position.z = tRos.translation.z;
             globalOdomMsg.pose.pose.orientation = tRos.rotation;
-
-            // 填充协方差 (简单复制 VINS 协方差，虽然不严谨但够用)
             globalOdomMsg.pose.covariance = odomMsg->pose.covariance;
 
             pubGlobalOdom_.publish(globalOdomMsg);
@@ -295,7 +283,7 @@ void GlobalOptimizer::publishVisualization(
     const ros::Time& stamp,
     const std::string& mapFrameId)
 {
-    // 1. 发布 Path
+    // 发布 Path
     nav_msgs::Path pathMsg;
     pathMsg.header.frame_id = mapFrameId;
     pathMsg.header.stamp = stamp;
@@ -312,8 +300,7 @@ void GlobalOptimizer::publishVisualization(
     }
     pubGlobalPath_.publish(pathMsg);
 
-    // 2. 发布 MapGraph (Link)
-    // 只有当有人订阅时才计算，节省资源 (且这就是你之前崩溃的触发点)
+    // 发布 MapGraph (Link)
     if(pubMapGraph_.getNumSubscribers() > 0) {
         rtabmap_msgs::MapGraph graphMsg;
         graphMsg.header = pathMsg.header;
@@ -340,7 +327,6 @@ void GlobalOptimizer::publishVisualization(
             linkMsg.type = iter->second.type();
             linkMsg.transform = rtabmapTransformToRos(iter->second.transform());
             
-            // 必须手动填充 information matrix，不能留 0
             // 我们从 RTAB-Map 的 link 中读取 matrix
             cv::Mat info = iter->second.infMatrix();
             
@@ -356,8 +342,7 @@ void GlobalOptimizer::publishVisualization(
                     linkMsg.information[k] = ptr[k];
                     if(ptr[k] != 0) allZeros = false;
                 }
-                // 如果全是 0 (比如 RTAB-Map 没算出来)，Rviz 收到会崩
-                // 强制设为单位矩阵
+                // 如果全是 0 ，Rviz 收到会崩
                 if(allZeros) {
                     for(int k=0; k<36; ++k) linkMsg.information[k] = (k%7==0)? 1.0 : 0.0;
                 }
@@ -398,4 +383,4 @@ void GlobalOptimizer::publishTF(const rtabmap::Transform& mapToOdom, const ros::
     tfBroadcaster_.sendTransform(tfStamped);
 }
 
-} // namespace vins_rtabmap_fusion
+}
